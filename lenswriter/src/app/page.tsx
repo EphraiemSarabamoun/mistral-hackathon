@@ -19,6 +19,19 @@ interface PendingChanges {
   revisedText: string;
 }
 
+function collectTextExcluding(node: Node, excludeDiffType: string): string {
+  let result = "";
+  for (const child of Array.from(node.childNodes)) {
+    if (child instanceof HTMLElement) {
+      if (child.dataset.diff === excludeDiffType) continue;
+      result += collectTextExcluding(child, excludeDiffType);
+    } else if (child.nodeType === Node.TEXT_NODE) {
+      result += child.textContent ?? "";
+    }
+  }
+  return result;
+}
+
 export default function Home() {
   const [text, setText] = useState("");
   const [locale, setLocale] = useState<Locale>("en");
@@ -148,6 +161,10 @@ export default function Home() {
   }
 
   function handleRejectChanges() {
+    if (diffRef.current) {
+      const result = collectTextExcluding(diffRef.current, "insert");
+      setText(result.trim());
+    }
     setPendingChanges(null);
   }
 

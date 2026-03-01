@@ -22,7 +22,7 @@ const DiffView = forwardRef<HTMLDivElement, DiffViewProps>(
         {ops.map((op, i) => {
           if (op.type === "equal") {
             return (
-              <span key={i} className="text-gray-200">
+              <span key={i} data-diff="equal" className="text-gray-200">
                 {op.text}{" "}
               </span>
             );
@@ -31,6 +31,7 @@ const DiffView = forwardRef<HTMLDivElement, DiffViewProps>(
             return (
               <span
                 key={i}
+                data-diff="delete"
                 className="line-through opacity-50 text-gray-400"
               >
                 {op.text}{" "}
@@ -41,6 +42,7 @@ const DiffView = forwardRef<HTMLDivElement, DiffViewProps>(
           return (
             <span
               key={i}
+              data-diff="insert"
               className="rounded px-0.5"
               style={{
                 backgroundColor: agentColor + "30",
