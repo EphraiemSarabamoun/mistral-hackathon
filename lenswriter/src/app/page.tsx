@@ -172,7 +172,11 @@ export default function Home() {
       <header className="border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between shrink-0">
         <div>
           <h1 className="text-lg font-bold tracking-tight">LensWriter</h1>
-          <p className="text-xs text-gray-500">{strings.tagline}</p>
+          <p className="text-xs text-gray-500">
+            {strings.tagline}
+            <span className="mx-1.5 text-gray-300 dark:text-gray-700">|</span>
+            <span className="text-orange-500 font-medium">Powered by Mistral</span>
+          </p>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-xs text-gray-500 tabular-nums">
