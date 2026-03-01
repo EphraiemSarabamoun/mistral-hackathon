@@ -75,14 +75,14 @@ function Toolbar({ editor }: { editor: Editor }) {
       <button
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         className={btn(editor.isActive("bulletList"))}
-        title="Bullet List"
+        aria-label="Bullet List"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="2.5" cy="3.5" r="1.5"/><circle cx="2.5" cy="8" r="1.5"/><circle cx="2.5" cy="12.5" r="1.5"/><rect x="6" y="2.5" width="9" height="2" rx="0.5"/><rect x="6" y="7" width="9" height="2" rx="0.5"/><rect x="6" y="11.5" width="9" height="2" rx="0.5"/></svg>
       </button>
       <button
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         className={btn(editor.isActive("orderedList"))}
-        title="Numbered List"
+        aria-label="Numbered List"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><text x="0.5" y="5" fontSize="5" fontWeight="bold">1.</text><text x="0.5" y="9.5" fontSize="5" fontWeight="bold">2.</text><text x="0.5" y="14" fontSize="5" fontWeight="bold">3.</text><rect x="6" y="2.5" width="9" height="2" rx="0.5"/><rect x="6" y="7" width="9" height="2" rx="0.5"/><rect x="6" y="11.5" width="9" height="2" rx="0.5"/></svg>
       </button>

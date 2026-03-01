@@ -17,6 +17,10 @@ You must respond ONLY with valid JSON in this exact format:
 
 Be specific. Reference exact phrases from the text when possible.`;
 
+export function buildSystemPrompt(persona: string, langSuffix: string): string {
+  return persona + JSON_FORMAT_INSTRUCTION + langSuffix;
+}
+
 export const defaultAgents: Agent[] = [
   {
     id: "conservative-skeptic",

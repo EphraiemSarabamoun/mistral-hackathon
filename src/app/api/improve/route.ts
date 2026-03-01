@@ -1,7 +1,6 @@
-import { Mistral } from "@mistralai/mistralai";
 import { NextRequest, NextResponse } from "next/server";
-
-const client = new Mistral({ apiKey: process.env.MISTRAL_API_KEY });
+import { mistral } from "@/lib/mistral";
+import { MISTRAL_MODEL, IMPROVE_TEMPERATURE } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,8 +29,8 @@ The writer wants you to make minor edits to their article so it scores higher wi
 - Do NOT rewrite the entire article. Keep as much of the original text intact as possible.
 - Do NOT add commentary, explanations, or markdown. Return ONLY the revised article text.${langInstruction}`;
 
-    const response = await client.chat.complete({
-      model: "mistral-large-latest",
+    const response = await mistral.chat.complete({
+      model: MISTRAL_MODEL,
       messages: [
         { role: "system", content: systemPrompt },
         {
@@ -39,7 +38,7 @@ The writer wants you to make minor edits to their article so it scores higher wi
           content: `Here is my article. Please return a lightly revised version:\n\n${text}`,
         },
       ],
-      temperature: 0.4,
+      temperature: IMPROVE_TEMPERATURE,
     });
 
     const content = response.choices?.[0]?.message?.content;

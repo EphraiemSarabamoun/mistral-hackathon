@@ -9,6 +9,7 @@ import {
 import { Agent, defaultAgents } from "@/lib/agents";
 import { Locale } from "@/lib/i18n";
 import { useLocalStorage } from "@/lib/useLocalStorage";
+import { STORAGE_KEYS } from "@/lib/constants";
 
 export type Theme = "light" | "dark";
 
@@ -24,9 +25,9 @@ interface AgentContextType {
 const AgentContext = createContext<AgentContextType | null>(null);
 
 export function AgentProvider({ children }: { children: ReactNode }) {
-  const [agents, setAgents] = useLocalStorage<Agent[]>("lw:agents", defaultAgents);
-  const [locale, setLocale] = useLocalStorage<Locale>("lw:locale", "en");
-  const [theme, setTheme] = useLocalStorage<Theme>("lw:theme", "dark");
+  const [agents, setAgents] = useLocalStorage<Agent[]>(STORAGE_KEYS.AGENTS, defaultAgents);
+  const [locale, setLocale] = useLocalStorage<Locale>(STORAGE_KEYS.LOCALE, "en");
+  const [theme, setTheme] = useLocalStorage<Theme>(STORAGE_KEYS.THEME, "dark");
 
   const updateAgent = useCallback(
     (id: string, updates: { name: string; persona: string }) => {

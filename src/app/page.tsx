@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
-import { JSON_FORMAT_INSTRUCTION } from "@/lib/agents";
+import { buildSystemPrompt } from "@/lib/agents";
 import { useAgents } from "@/lib/AgentContext";
 import AgentCard, { AgentFeedback } from "@/components/AgentCard";
 import RichEditor from "@/components/RichEditor";
@@ -11,6 +11,7 @@ import { diffWords } from "@/lib/diff";
 import { stripHtml } from "@/lib/stripHtml";
 import { t } from "@/lib/i18n";
 import { useLocalStorage } from "@/lib/useLocalStorage";
+import { STORAGE_KEYS } from "@/lib/constants";
 
 type FeedbackState = Record<
   string,
@@ -40,7 +41,7 @@ function collectTextExcluding(node: Node, excludeDiffType: string): string {
 export default function Home() {
   const { agents, locale, setLocale, theme, setTheme } = useAgents();
   const strings = t(locale);
-  const [htmlContent, setHtmlContent] = useLocalStorage("lw:editorHtml", "");
+  const [htmlContent, setHtmlContent] = useLocalStorage(STORAGE_KEYS.EDITOR_HTML, "");
   const plainText = useMemo(() => stripHtml(htmlContent), [htmlContent]);
 
   const [feedbackState, setFeedbackState] = useState<FeedbackState>(() =>
@@ -55,6 +56,7 @@ export default function Home() {
     null
   );
   const [improveLoadingId, setImproveLoadingId] = useState<string | null>(null);
+  const [improveError, setImproveError] = useState<string | null>(null);
   const diffRef = useRef<HTMLDivElement>(null);
 
   const diffOps = useMemo(() => {
@@ -77,8 +79,7 @@ export default function Home() {
     await Promise.allSettled(
       agents.map(async (agent) => {
         try {
-          const systemPrompt =
-            agent.persona + JSON_FORMAT_INSTRUCTION + strings.langSuffix;
+          const systemPrompt = buildSystemPrompt(agent.persona, strings.langSuffix);
 
           const res = await fetch("/api/feedback", {
             method: "POST",
@@ -117,6 +118,7 @@ export default function Home() {
       if (!agent || !feedback || !plainText.trim()) return;
 
       setImproveLoadingId(agentId);
+      setImproveError(null);
 
       try {
         const res = await fetch("/api/improve", {
@@ -142,7 +144,8 @@ export default function Home() {
           revisedText: data.revisedText,
         });
       } catch (err) {
-        console.error("Improve error:", err);
+        const msg = err instanceof Error ? err.message : "Unknown error";
+        setImproveError(msg);
       } finally {
         setImproveLoadingId(null);
       }
@@ -189,12 +192,13 @@ export default function Home() {
           <button
             onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
             className="px-3 py-2 border border-gray-300 dark:border-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            title={theme === "dark" ? "Light mode" : "Dark mode"}
+            aria-label={theme === "dark" ? "Light mode" : "Dark mode"}
           >
             {theme === "dark" ? "\u2600\uFE0F" : "\uD83C\uDF19"}
           </button>
           <button
             onClick={() => setLocale((l) => (l === "en" ? "fr" : "en"))}
+            aria-label={locale === "en" ? "Switch to French" : "Switch to English"}
             className="px-3 py-2 border border-gray-300 dark:border-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             {locale === "en" ? "FR" : "EN"}
@@ -278,6 +282,11 @@ export default function Home() {
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-1">
             {strings.perspectives}
           </h2>
+          {improveError && (
+            <p className="text-sm text-red-600 dark:text-red-400 px-1">
+              {strings.feedbackError} {improveError}
+            </p>
+          )}
           {agents.map((agent) => (
             <AgentCard
               key={agent.id}

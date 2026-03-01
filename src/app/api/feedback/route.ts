@@ -1,7 +1,6 @@
-import { Mistral } from "@mistralai/mistralai";
 import { NextRequest, NextResponse } from "next/server";
-
-const client = new Mistral({ apiKey: process.env.MISTRAL_API_KEY });
+import { mistral } from "@/lib/mistral";
+import { MISTRAL_MODEL, FEEDBACK_TEMPERATURE } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,8 +13,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await client.chat.complete({
-      model: "mistral-large-latest",
+    const response = await mistral.chat.complete({
+      model: MISTRAL_MODEL,
       messages: [
         { role: "system", content: systemPrompt },
         {
@@ -24,7 +23,7 @@ export async function POST(request: NextRequest) {
         },
       ],
       responseFormat: { type: "json_object" },
-      temperature: 0.7,
+      temperature: FEEDBACK_TEMPERATURE,
     });
 
     const content = response.choices?.[0]?.message?.content;
@@ -35,7 +34,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const parsed = JSON.parse(content);
+    let parsed;
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON response from AI" },
+        { status: 502 }
+      );
+    }
 
     return NextResponse.json(parsed);
   } catch (error) {

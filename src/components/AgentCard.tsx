@@ -119,11 +119,7 @@ export default function AgentCard({
               color: agent.color,
             }}
           >
-            {improveLoading
-              ? locale === "fr"
-                ? "Chargement..."
-                : "Loading..."
-              : strings.suggestEdits}
+            {improveLoading ? strings.loading : strings.suggestEdits}
           </button>
         </div>
       )}

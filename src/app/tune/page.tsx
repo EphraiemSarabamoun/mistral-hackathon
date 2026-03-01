@@ -2,10 +2,11 @@
 
 import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
-import { JSON_FORMAT_INSTRUCTION } from "@/lib/agents";
+import { buildSystemPrompt } from "@/lib/agents";
 import { useAgents } from "@/lib/AgentContext";
 import { t } from "@/lib/i18n";
 import { useLocalStorage } from "@/lib/useLocalStorage";
+import { STORAGE_KEYS } from "@/lib/constants";
 import ScoreBar from "@/components/ScoreBar";
 
 interface Article {
@@ -37,8 +38,8 @@ export default function TunePage() {
   const { agents, updateAgent, locale, setLocale, theme, setTheme } = useAgents();
   const strings = t(locale);
 
-  const [folders, setFolders] = useLocalStorage<Folder[]>("lw:tuneFolders", []);
-  const [selectedFolderId, setSelectedFolderId] = useLocalStorage<string | null>("lw:tuneSelectedFolder", null);
+  const [folders, setFolders] = useLocalStorage<Folder[]>(STORAGE_KEYS.TUNE_FOLDERS, []);
+  const [selectedFolderId, setSelectedFolderId] = useLocalStorage<string | null>(STORAGE_KEYS.TUNE_SELECTED_FOLDER, null);
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -81,6 +82,9 @@ export default function TunePage() {
     if (!files || !selectedFolderId) return;
     setUploading(true);
 
+    const folderId = selectedFolderId;
+    const newArticles: Article[] = [];
+
     for (const file of Array.from(files)) {
       try {
         const formData = new FormData();
@@ -98,22 +102,24 @@ export default function TunePage() {
 
         const { filename, content } = await res.json();
 
-        const article: Article = {
+        newArticles.push({
           id: crypto.randomUUID(),
           filename,
           content,
-        };
-
-        setFolders((prev) =>
-          prev.map((f) =>
-            f.id === selectedFolderId
-              ? { ...f, articles: [...f.articles, article], results: [] }
-              : f
-          )
-        );
+        });
       } catch (err) {
         console.error("Upload error:", err);
       }
+    }
+
+    if (newArticles.length > 0) {
+      setFolders((prev) =>
+        prev.map((f) =>
+          f.id === folderId
+            ? { ...f, articles: [...f.articles, ...newArticles], results: [] }
+            : f
+        )
+      );
     }
 
     setUploading(false);
@@ -153,8 +159,7 @@ export default function TunePage() {
 
       const results = await Promise.allSettled(
         agents.map(async (agent) => {
-          const systemPrompt =
-            agent.persona + JSON_FORMAT_INSTRUCTION + strings.langSuffix;
+          const systemPrompt = buildSystemPrompt(agent.persona, strings.langSuffix);
 
           const res = await fetch("/api/feedback", {
             method: "POST",
@@ -260,13 +265,14 @@ export default function TunePage() {
           <button
             onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
             className="px-3 py-2 border border-gray-300 dark:border-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            title={theme === "dark" ? "Light mode" : "Dark mode"}
+            aria-label={theme === "dark" ? "Light mode" : "Dark mode"}
           >
             {theme === "dark" ? "\u2600\uFE0F" : "\uD83C\uDF19"}
           </button>
           <button
             onClick={() => setLocale((l) => (l === "en" ? "fr" : "en"))}
             className="px-3 py-2 border border-gray-300 dark:border-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label={locale === "en" ? "Switch to French" : "Switch to English"}
           >
             {locale === "en" ? "FR" : "EN"}
           </button>
