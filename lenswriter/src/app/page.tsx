@@ -8,6 +8,7 @@ import AgentCard, { AgentFeedback } from "@/components/AgentCard";
 import DiffView from "@/components/DiffView";
 import { diffWords } from "@/lib/diff";
 import { t } from "@/lib/i18n";
+import { useLocalStorage } from "@/lib/useLocalStorage";
 
 type FeedbackState = Record<
   string,
@@ -37,7 +38,7 @@ function collectTextExcluding(node: Node, excludeDiffType: string): string {
 export default function Home() {
   const { agents, updateAgent, locale, setLocale } = useAgents();
   const strings = t(locale);
-  const [text, setText] = useState("");
+  const [text, setText] = useLocalStorage("lw:editorText", "");
   const [feedbackState, setFeedbackState] = useState<FeedbackState>(() =>
     Object.fromEntries(
       agents.map((a) => [

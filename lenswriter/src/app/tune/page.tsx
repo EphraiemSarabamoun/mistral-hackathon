@@ -5,6 +5,7 @@ import Link from "next/link";
 import { JSON_FORMAT_INSTRUCTION } from "@/lib/agents";
 import { useAgents } from "@/lib/AgentContext";
 import { t } from "@/lib/i18n";
+import { useLocalStorage } from "@/lib/useLocalStorage";
 import ScoreBar from "@/components/ScoreBar";
 
 interface Article {
@@ -36,8 +37,8 @@ export default function TunePage() {
   const { agents, locale, setLocale } = useAgents();
   const strings = t(locale);
 
-  const [folders, setFolders] = useState<Folder[]>([]);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [folders, setFolders] = useLocalStorage<Folder[]>("lw:tuneFolders", []);
+  const [selectedFolderId, setSelectedFolderId] = useLocalStorage<string | null>("lw:tuneSelectedFolder", null);
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [isRunning, setIsRunning] = useState(false);

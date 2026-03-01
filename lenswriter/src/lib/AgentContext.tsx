@@ -3,12 +3,12 @@
 import {
   createContext,
   useContext,
-  useState,
   useCallback,
   ReactNode,
 } from "react";
 import { Agent, defaultAgents } from "@/lib/agents";
 import { Locale } from "@/lib/i18n";
+import { useLocalStorage } from "@/lib/useLocalStorage";
 
 interface AgentContextType {
   agents: Agent[];
@@ -20,8 +20,8 @@ interface AgentContextType {
 const AgentContext = createContext<AgentContextType | null>(null);
 
 export function AgentProvider({ children }: { children: ReactNode }) {
-  const [agents, setAgents] = useState<Agent[]>(() => defaultAgents);
-  const [locale, setLocale] = useState<Locale>("en");
+  const [agents, setAgents] = useLocalStorage<Agent[]>("lw:agents", defaultAgents);
+  const [locale, setLocale] = useLocalStorage<Locale>("lw:locale", "en");
 
   const updateAgent = useCallback(
     (id: string, updates: { name: string; persona: string }) => {
@@ -29,7 +29,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
         prev.map((a) => (a.id === id ? { ...a, ...updates } : a))
       );
     },
-    []
+    [setAgents]
   );
 
   return (
