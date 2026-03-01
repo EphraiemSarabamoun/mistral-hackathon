@@ -1,6 +1,7 @@
 "use client";
 
 import { Agent } from "@/lib/agents";
+import { Locale, t } from "@/lib/i18n";
 
 export interface AgentFeedback {
   approval_score: number;
@@ -10,6 +11,7 @@ export interface AgentFeedback {
 
 interface AgentCardProps {
   agent: Agent;
+  locale: Locale;
   feedback: AgentFeedback | null;
   loading: boolean;
   error: string | null;
@@ -50,10 +52,14 @@ function SkeletonCard() {
 
 export default function AgentCard({
   agent,
+  locale,
   feedback,
   loading,
   error,
 }: AgentCardProps) {
+  const strings = t(locale);
+  const displayName = strings.agentNames[agent.id] ?? agent.name;
+
   return (
     <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4 space-y-3">
       <div className="flex items-center gap-3">
@@ -63,20 +69,22 @@ export default function AgentCard({
         >
           {agent.avatar}
         </div>
-        <h3 className="font-semibold text-sm text-gray-200">{agent.name}</h3>
+        <h3 className="font-semibold text-sm text-gray-200">{displayName}</h3>
       </div>
 
       {loading && <SkeletonCard />}
 
       {error && (
-        <p className="text-sm text-red-400">Failed to get feedback: {error}</p>
+        <p className="text-sm text-red-400">
+          {strings.feedbackError} {error}
+        </p>
       )}
 
       {feedback && !loading && (
         <div className="space-y-3">
           <div>
             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-              Approval
+              {strings.approval}
             </p>
             <ScoreBar score={feedback.approval_score} />
           </div>
@@ -84,7 +92,7 @@ export default function AgentCard({
           {feedback.key_disagreements.length > 0 && (
             <div>
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-                Disagreements
+                {strings.disagreements}
               </p>
               <ul className="space-y-1">
                 {feedback.key_disagreements.map((d, i) => (
@@ -104,7 +112,7 @@ export default function AgentCard({
 
           <div>
             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-              Perspective
+              {strings.perspective}
             </p>
             <p className="text-sm text-gray-300 italic">
               &ldquo;{feedback.perspective_summary}&rdquo;
@@ -114,10 +122,7 @@ export default function AgentCard({
       )}
 
       {!feedback && !loading && !error && (
-        <p className="text-sm text-gray-600 italic">
-          Write something and click &ldquo;Get Perspectives&rdquo; to see
-          feedback.
-        </p>
+        <p className="text-sm text-gray-600 italic">{strings.emptyState}</p>
       )}
     </div>
   );

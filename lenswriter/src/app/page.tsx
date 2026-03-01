@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { agents } from "@/lib/agents";
 import AgentCard, { AgentFeedback } from "@/components/AgentCard";
+import { Locale, t } from "@/lib/i18n";
 
 type FeedbackState = Record<
   string,
@@ -11,6 +12,8 @@ type FeedbackState = Record<
 
 export default function Home() {
   const [text, setText] = useState("");
+  const [locale, setLocale] = useState<Locale>("en");
+  const strings = t(locale);
   const [feedbackState, setFeedbackState] = useState<FeedbackState>(() =>
     Object.fromEntries(
       agents.map((a) => [a.id, { data: null, loading: false, error: null }])
@@ -39,7 +42,7 @@ export default function Home() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               text,
-              systemPrompt: agent.systemPrompt,
+              systemPrompt: agent.systemPrompt + strings.langSuffix,
             }),
           });
 
@@ -65,7 +68,7 @@ export default function Home() {
         }
       })
     );
-  }, [text]);
+  }, [text, strings.langSuffix]);
 
   const wordCount = text
     .trim()
@@ -78,20 +81,24 @@ export default function Home() {
       <header className="border-b border-gray-800 px-6 py-3 flex items-center justify-between shrink-0">
         <div>
           <h1 className="text-lg font-bold tracking-tight">LensWriter</h1>
-          <p className="text-xs text-gray-500">
-            See your writing through every lens
-          </p>
+          <p className="text-xs text-gray-500">{strings.tagline}</p>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-xs text-gray-500 tabular-nums">
-            {wordCount} {wordCount === 1 ? "word" : "words"}
+            {wordCount} {wordCount === 1 ? strings.word : strings.words}
           </span>
+          <button
+            onClick={() => setLocale((l) => (l === "en" ? "fr" : "en"))}
+            className="px-3 py-2 border border-gray-700 text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            {locale === "en" ? "FR" : "EN"}
+          </button>
           <button
             onClick={fetchFeedback}
             disabled={!text.trim()}
             className="px-4 py-2 bg-white text-gray-950 text-sm font-medium rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
-            Get Perspectives
+            {strings.getPerspectives}
           </button>
         </div>
       </header>
@@ -103,7 +110,7 @@ export default function Home() {
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Start writing your article here..."
+            placeholder={strings.placeholder}
             className="flex-1 w-full bg-transparent resize-none p-6 text-gray-200 placeholder:text-gray-700 text-base leading-relaxed focus:outline-none"
             spellCheck
           />
@@ -112,12 +119,13 @@ export default function Home() {
         {/* Agent sidebar */}
         <aside className="w-96 shrink-0 overflow-y-auto p-4 space-y-4">
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-1">
-            Perspectives
+            {strings.perspectives}
           </h2>
           {agents.map((agent) => (
             <AgentCard
               key={agent.id}
               agent={agent}
+              locale={locale}
               feedback={feedbackState[agent.id]?.data ?? null}
               loading={feedbackState[agent.id]?.loading ?? false}
               error={feedbackState[agent.id]?.error ?? null}
