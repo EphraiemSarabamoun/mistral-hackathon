@@ -34,7 +34,7 @@ interface Folder {
 }
 
 export default function TunePage() {
-  const { agents, locale, setLocale } = useAgents();
+  const { agents, updateAgent, locale, setLocale } = useAgents();
   const strings = t(locale);
 
   const [folders, setFolders] = useLocalStorage<Folder[]>("lw:tuneFolders", []);
@@ -45,6 +45,9 @@ export default function TunePage() {
   const [progress, setProgress] = useState("");
   const [uploading, setUploading] = useState(false);
   const [previewArticleId, setPreviewArticleId] = useState<string | null>(null);
+  const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
+  const [draftName, setDraftName] = useState("");
+  const [draftPersona, setDraftPersona] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -211,6 +214,29 @@ export default function TunePage() {
       .find((r) => r.articleId === articleId)
       ?.agentResults.find((a) => a.agentId === agentId);
     return ar?.approval_score ?? null;
+  }
+
+  // --- Agent editing ---
+
+  function handleEditAgent(agentId: string) {
+    const agent = agents.find((a) => a.id === agentId);
+    if (!agent) return;
+    setDraftName(agent.name);
+    setDraftPersona(agent.persona);
+    setEditingAgentId(agentId);
+  }
+
+  function handleSaveAgent() {
+    if (!editingAgentId || !draftName.trim() || !draftPersona.trim()) return;
+    updateAgent(editingAgentId, {
+      name: draftName.trim(),
+      persona: draftPersona.trim(),
+    });
+    setEditingAgentId(null);
+  }
+
+  function handleCancelEdit() {
+    setEditingAgentId(null);
   }
 
   return (
@@ -447,80 +473,131 @@ export default function TunePage() {
           )}
         </div>
 
-        {/* Results panel */}
+        {/* Agents & Results panel */}
         <div className="w-80 shrink-0 flex flex-col">
           <div className="p-3 border-b border-gray-800">
             <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              {strings.results}
+              {strings.agents}
             </h2>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {!selectedFolder || selectedFolder.results.length === 0 ? (
-              <p className="text-xs text-gray-600 italic">
-                {strings.noResults}
-              </p>
-            ) : (
-              agents.map((agent) => {
-                const avg = getAgentAvgScore(
-                  selectedFolder.results,
-                  agent.id
-                );
-                if (avg === null) return null;
-                const displayName =
-                  strings.agentNames[agent.id] ?? agent.name;
+            {agents.map((agent) => {
+              const displayName =
+                strings.agentNames[agent.id] ?? agent.name;
+              const isEditing = editingAgentId === agent.id;
+              const avg = selectedFolder
+                ? getAgentAvgScore(selectedFolder.results, agent.id)
+                : null;
 
-                return (
-                  <div
-                    key={agent.id}
-                    className="rounded-xl border border-gray-800 bg-gray-900/50 p-4 space-y-2"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                        style={{ backgroundColor: agent.color }}
+              return (
+                <div
+                  key={agent.id}
+                  className="rounded-xl border border-gray-800 bg-gray-900/50 p-4 space-y-2"
+                >
+                  {/* Agent header */}
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                      style={{ backgroundColor: agent.color }}
+                    >
+                      {agent.avatar}
+                    </div>
+                    {isEditing ? (
+                      <input
+                        value={draftName}
+                        onChange={(e) => setDraftName(e.target.value)}
+                        className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-gray-200 focus:outline-none focus:border-gray-500"
+                        autoFocus
+                      />
+                    ) : (
+                      <h3 className="font-semibold text-sm text-gray-200 truncate flex-1">
+                        {displayName}
+                      </h3>
+                    )}
+                    {!isEditing && (
+                      <button
+                        onClick={() => handleEditAgent(agent.id)}
+                        className="text-gray-600 hover:text-gray-400 transition-colors shrink-0"
+                        title={strings.editAgent}
                       >
-                        {agent.avatar}
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-semibold text-sm text-gray-200 truncate">
-                          {displayName}
-                        </h3>
-                        <p className="text-xs text-gray-500">
-                          {strings.avgScore}
-                        </p>
-                      </div>
-                    </div>
-                    <ScoreBar score={avg} decimals />
-
-                    {/* Per-article breakdown */}
-                    <div className="space-y-1 pt-1">
-                      {selectedFolder.articles.map((article) => {
-                        const score = getArticleAgentScore(
-                          selectedFolder.results,
-                          article.id,
-                          agent.id
-                        );
-                        if (score === null) return null;
-                        return (
-                          <div
-                            key={article.id}
-                            className="flex items-center justify-between"
-                          >
-                            <span className="text-xs text-gray-500 truncate max-w-[60%]">
-                              {article.filename}
-                            </span>
-                            <span className="text-xs font-mono text-gray-400">
-                              {score}/10
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
-                );
-              })
-            )}
+
+                  {/* Edit form */}
+                  {isEditing && (
+                    <div className="space-y-2">
+                      <label className="text-xs text-gray-500 uppercase tracking-wide">
+                        {strings.personaLabel}
+                      </label>
+                      <textarea
+                        value={draftPersona}
+                        onChange={(e) => setDraftPersona(e.target.value)}
+                        rows={6}
+                        className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-300 leading-relaxed resize-y focus:outline-none focus:border-gray-500"
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          onClick={handleCancelEdit}
+                          className="px-3 py-1.5 text-xs text-gray-400 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors"
+                        >
+                          {strings.cancel}
+                        </button>
+                        <button
+                          onClick={handleSaveAgent}
+                          disabled={!draftName.trim() || !draftPersona.trim()}
+                          className="px-3 py-1.5 text-xs text-gray-950 bg-white rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {strings.save}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Scores (when results exist) */}
+                  {!isEditing && avg !== null && selectedFolder && (
+                    <>
+                      <p className="text-xs text-gray-500">
+                        {strings.avgScore}
+                      </p>
+                      <ScoreBar score={avg} decimals />
+                      <div className="space-y-1 pt-1">
+                        {selectedFolder.articles.map((article) => {
+                          const score = getArticleAgentScore(
+                            selectedFolder.results,
+                            article.id,
+                            agent.id
+                          );
+                          if (score === null) return null;
+                          return (
+                            <div
+                              key={article.id}
+                              className="flex items-center justify-between"
+                            >
+                              <span className="text-xs text-gray-500 truncate max-w-[60%]">
+                                {article.filename}
+                              </span>
+                              <span className="text-xs font-mono text-gray-400">
+                                {score}/10
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

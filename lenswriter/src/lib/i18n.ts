@@ -36,6 +36,11 @@ const strings = {
     deleteFolder: "Delete",
     deleteArticle: "Remove",
     closePreview: "Close",
+    editAgent: "Edit agent",
+    personaLabel: "Description / Persona",
+    save: "Save",
+    cancel: "Cancel",
+    agents: "Agents",
     evaluating: "Evaluating article",
     of: "of",
     agentNames: {
@@ -80,6 +85,11 @@ const strings = {
     deleteFolder: "Supprimer",
     deleteArticle: "Supprimer",
     closePreview: "Fermer",
+    editAgent: "Modifier l'agent",
+    personaLabel: "Description / Persona",
+    save: "Enregistrer",
+    cancel: "Annuler",
+    agents: "Agents",
     evaluating: "Evaluation de l'article",
     of: "sur",
     agentNames: {

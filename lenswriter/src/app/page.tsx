@@ -36,7 +36,7 @@ function collectTextExcluding(node: Node, excludeDiffType: string): string {
 }
 
 export default function Home() {
-  const { agents, updateAgent, locale, setLocale } = useAgents();
+  const { agents, locale, setLocale } = useAgents();
   const strings = t(locale);
   const [text, setText] = useLocalStorage("lw:editorText", "");
   const [feedbackState, setFeedbackState] = useState<FeedbackState>(() =>
@@ -275,7 +275,6 @@ export default function Home() {
               error={feedbackState[agent.id]?.error ?? null}
               improveLoading={improveLoadingId === agent.id}
               hasActiveChanges={!!pendingChanges}
-              onUpdate={updateAgent}
               onImprove={handleImprove}
             />
           ))}
